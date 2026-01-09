@@ -1,14 +1,20 @@
 #include <Arduino.h>
 
+// current data point number
 int currDataNum = 0;
-int currTickNum = 0;
+// total ticks in data point
 int totalTicks = 0;
+// current tick number being output from total ticks in data point
+int currTickNum = 0;
+// time in milliseconds per tick
 double tickTime = 0;
 
 unsigned long startTime;
 
+// state trigger: when true need to output high voltage, otherwise no voltage
 bool highVoltTick = true;
-bool startTick = true;
+// indicated beginning of high voltage or no voltage of tick
+bool startTickSegment = true;
 
 // output pin; can be anything
 const int outputPin = 8;
@@ -33,46 +39,48 @@ void setup() {
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
-
-  if (!highVoltTick) {
-    if (startTick) {
-      startTime = millis();
-      setLowVoltageOutput();
-      startTick = false;
-    }
-    if (millis() - startTime >= tickTime / 2) {
-      highVoltTick = true;
-      startTick = true;
-      currTickNum++;
-      if (currTickNum == totalTicks)
-        currDataNum++;
-    }
-  }
 
   if (highVoltTick) {
     if (currDataNum < numData) {
       if (currTickNum == totalTicks) {
+        // calculate total ticks, reset current tick counter, calculate tick time
         totalTicks = getNumTicks(rpmTime[currDataNum][0], rpmTime[currDataNum][1]);
         currTickNum = 0;
         tickTime = 1000.0 / (rpmTime[currDataNum][0] / 60.0 * numGearTeeth);
       }
 
-      if (startTick) {
+      if (startTickSegment) {
         startTime = millis();
         setHighVoltageOutput();
-        startTick = false;
+        startTickSegment = false;
       }
 
+      // tickTime / 2 because half the tick is higher voltage and other half is no voltage
       if (millis() - startTime >= tickTime / 2) {
         highVoltTick = false;
-        startTick = true;
+        startTickSegment = true;
       }
     }
+    // when done with all data output no voltage
     else
       setLowVoltageOutput();
   }
 
+  else if (!highVoltTick) {
+    // similar to previous
+    if (startTickSegment) {
+      startTime = millis();
+      setLowVoltageOutput();
+      startTickSegment = false;
+    }
+    if (millis() - startTime >= tickTime / 2) {
+      highVoltTick = true;
+      startTickSegment = true;
+      currTickNum++;
+      if (currTickNum == totalTicks)
+        currDataNum++;
+    }
+  }
 }
 
 // gets total number of ticks for each data point
