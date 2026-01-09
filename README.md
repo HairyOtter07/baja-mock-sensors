@@ -6,5 +6,5 @@ Project: Mock Sensors (Rama)
 </div>
 
 <div>
-Group: Dhruv Bharadwaj, Vardaan Singania, Justin Luc
+Group: Dhruv Bharadwaj, Vardaan Singhania, Justin Luc
 </div>
