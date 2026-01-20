@@ -29,6 +29,10 @@ const double rpmTime[numData][2] PROGMEM = {
   {1, 1}
 };
 
+double getNumTicks(double rpm, double time);
+void setHighVoltageOutput();
+void setLowVoltageOutput();
+
 // put function declarations here:
 
 void setup() {
