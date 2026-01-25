@@ -3,9 +3,9 @@
 // current data point number
 int currDataNum = 0;
 // total ticks in data point
-int totalTicks = 0;
+unsigned long totalTicks = 0;
 // current tick number being output from total ticks in data point
-int currTickNum = 0;
+unsigned long currTickNum = 0;
 // time in milliseconds per tick
 double tickTime = 0;
 
@@ -23,13 +23,13 @@ const int numData = 3;
 // need to know number of gear teeth in gear to convert rpm to number of ticks
 const int numGearTeeth = 30;
 // input data: rpm, amount of time in seconds at rpm
-const double rpmTime[numData][2] PROGMEM = {
-  {1, 2},
-  {1, 1},
-  {1, 1}
+const double rpmTime[numData][2] = {
+  {60, 2},
+  {120, 2},
+  {30, 1}
 };
 
-double getNumTicks(double rpm, double time);
+unsigned long getNumTicks(double rpm, double time);
 void setHighVoltageOutput();
 void setLowVoltageOutput();
 
@@ -66,8 +66,10 @@ void loop() {
       }
     }
     // when done with all data output no voltage
-    else
+    if (currDataNum >= numData) {
       setLowVoltageOutput();
+      return;
+    }
   }
 
   else if (!highVoltTick) {
@@ -88,7 +90,7 @@ void loop() {
 }
 
 // gets total number of ticks for each data point
-double getNumTicks(double rpm, double time) {
+unsigned long getNumTicks(double rpm, double time) {
   return rpm / 60 * time * numGearTeeth;
 }
 
