@@ -83,7 +83,7 @@ void loop() {
       highVoltTick = true;
       startTickSegment = true;
       currTickNum++;
-      if (currTickNum == totalTicks)
+      if (currTickNum >= totalTicks)
         currDataNum++;
     }
   }
@@ -91,7 +91,7 @@ void loop() {
 
 // gets total number of ticks for each data point
 unsigned long getNumTicks(double rpm, double time) {
-  return rpm / 60 * time * numGearTeeth;
+  return (unsigned long)(rpm * time * numGearTeeth / 60);
 }
 
 // sets output to 5 volts
