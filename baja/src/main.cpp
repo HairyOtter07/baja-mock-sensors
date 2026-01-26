@@ -17,16 +17,17 @@ bool highVoltTick = true;
 bool startTickSegment = true;
 
 // output pin; can be anything
-const int outputPin = 8;
+const int outputPin = 2;
 // number of data points
 const int numData = 3;
 // need to know number of gear teeth in gear to convert rpm to number of ticks
-const int numGearTeeth = 30;
+// 30
+const int numGearTeeth = 1;
 // input data: rpm, amount of time in seconds at rpm
 const double rpmTime[numData][2] = {
   {60, 2},
   {120, 2},
-  {30, 1}
+  {60, 1}
 };
 
 unsigned long getNumTicks(double rpm, double time);
@@ -91,7 +92,7 @@ void loop() {
 
 // gets total number of ticks for each data point
 unsigned long getNumTicks(double rpm, double time) {
-  return (unsigned long)(rpm * time * numGearTeeth / 60);
+  return (unsigned long)(rpm * time * numGearTeeth / 60.0);
 }
 
 // sets output to 5 volts
