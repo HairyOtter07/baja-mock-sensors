@@ -7,7 +7,8 @@ unsigned long totalTicks = 0;
 // current tick number being output from total ticks in data point
 unsigned long currTickNum = 0;
 // time in milliseconds per tick
-double tickTime = 0;
+// double tickTime = 0;
+unsigned long tickTimeUs;
 
 unsigned long startTime;
 
@@ -22,10 +23,10 @@ const int outputPin = 2;
 const int numData = 3;
 // need to know number of gear teeth in gear to convert rpm to number of ticks
 // 30
-const int numGearTeeth = 1;
+const int numGearTeeth = 16;
 // input data: rpm, amount of time in seconds at rpm
 const double rpmTime[numData][2] = {
-  {60, 2},
+  {19620, 100},
   {120, 2},
   {60, 1}
 };
@@ -44,24 +45,27 @@ void setup() {
 }
 
 void loop() {
-
+  unsigned long now = micros();
   if (highVoltTick) {
     if (currDataNum < numData) {
       if (currTickNum == totalTicks) {
         // calculate total ticks, reset current tick counter, calculate tick time
         totalTicks = getNumTicks(rpmTime[currDataNum][0], rpmTime[currDataNum][1]);
         currTickNum = 0;
-        tickTime = 1000.0 / (rpmTime[currDataNum][0] / 60.0 * numGearTeeth);
+        // tickTime = 1000.0 / (rpmTime[currDataNum][0] / 60.0 * numGearTeeth);
+        tickTimeUs = (unsigned long)(60000000.0 / (rpmTime[currDataNum][0] * numGearTeeth));
       }
 
       if (startTickSegment) {
-        startTime = millis();
+        // startTime = micros() / (10 * 10 * 10);
+        // startTime = micros();
+        startTime = now;
         setHighVoltageOutput();
         startTickSegment = false;
       }
 
       // tickTime / 2 because half the tick is higher voltage and other half is no voltage
-      if (millis() - startTime >= tickTime / 2) {
+      if (now - startTime >= tickTimeUs / 2) {
         highVoltTick = false;
         startTickSegment = true;
       }
@@ -76,11 +80,12 @@ void loop() {
   else if (!highVoltTick) {
     // similar to previous
     if (startTickSegment) {
-      startTime = millis();
+      // startTime = micros();
+      startTime = now;
       setLowVoltageOutput();
       startTickSegment = false;
     }
-    if (millis() - startTime >= tickTime / 2) {
+    if (now - startTime >= tickTimeUs / 2) {
       highVoltTick = true;
       startTickSegment = true;
       currTickNum++;
