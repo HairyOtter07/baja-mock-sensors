@@ -26,7 +26,8 @@ const int numData = 3;
 const int numGearTeeth = 16;
 // input data: rpm, amount of time in seconds at rpm
 const double rpmTime[numData][2] = {
-  {19620, 100},
+  // {19620, 100},
+  {240000, 100},
   {120, 2},
   {60, 1}
 };
