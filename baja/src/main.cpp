@@ -1,38 +1,24 @@
 #include <Arduino.h>
 
-// current data point number
-int currDataNum = 0;
-// total ticks in data point
-unsigned long totalTicks = 0;
-// current tick number being output from total ticks in data point
-unsigned long currTickNum = 0;
-// time in milliseconds per tick
-// double tickTime = 0;
-unsigned long tickTimeUs;
-
-unsigned long startTime;
+// amount of time per tick in microseconds; time when tick starts
+unsigned long tickTimeUs, startTime;
 
 // state trigger: when true need to output high voltage, otherwise no voltage
 bool highVoltTick = true;
 // indicated beginning of high voltage or no voltage of tick
 bool startTickSegment = true;
 
-// output pin; can be anything
+// potentiometer analog pin
+const int potPin = A0;
+// voltage output pin
 const int outputPin = 2;
-// number of data points
-const int numData = 3;
 // need to know number of gear teeth in gear to convert rpm to number of ticks
-// 30
 const int numGearTeeth = 16;
-// input data: rpm, amount of time in seconds at rpm
-const double rpmTime[numData][2] = {
-  // {19620, 100},
-  {240000, 100},
-  {120, 2},
-  {60, 1}
-};
 
-unsigned long getNumTicks(double rpm, double time);
+const double minRPM = 0;
+const double maxRPM = 6000;
+
+// unsigned long getNumTicks(double rpm, double time);
 void setHighVoltageOutput();
 void setLowVoltageOutput();
 
@@ -46,42 +32,35 @@ void setup() {
 }
 
 void loop() {
+  // potentiometer returns value from 1-1023
+  int potVal = analogRead(potPin);
+  double rpm = minRPM + (double)potVal / 1023.0 * (maxRPM - minRPM);
+
+  if (rpm > 0) 
+    tickTimeUs = (unsigned long)(60000000.0 / (rpm * numGearTeeth));
+  else {
+    setLowVoltageOutput();
+    return;
+  }
+
   unsigned long now = micros();
   if (highVoltTick) {
-    if (currDataNum < numData) {
-      if (currTickNum == totalTicks) {
-        // calculate total ticks, reset current tick counter, calculate tick time
-        totalTicks = getNumTicks(rpmTime[currDataNum][0], rpmTime[currDataNum][1]);
-        currTickNum = 0;
-        // tickTime = 1000.0 / (rpmTime[currDataNum][0] / 60.0 * numGearTeeth);
-        tickTimeUs = (unsigned long)(60000000.0 / (rpmTime[currDataNum][0] * numGearTeeth));
-      }
-
-      if (startTickSegment) {
-        // startTime = micros() / (10 * 10 * 10);
-        // startTime = micros();
+    if (startTickSegment) {
         startTime = now;
         setHighVoltageOutput();
         startTickSegment = false;
-      }
-
-      // tickTime / 2 because half the tick is higher voltage and other half is no voltage
-      if (now - startTime >= tickTimeUs / 2) {
-        highVoltTick = false;
-        startTickSegment = true;
-      }
     }
-    // when done with all data output no voltage
-    if (currDataNum >= numData) {
-      setLowVoltageOutput();
-      return;
+
+    // tickTime / 2 because half the tick is higher voltage and other half is no voltage
+    if (now - startTime >= tickTimeUs / 2) {
+      highVoltTick = false;
+      startTickSegment = true;
     }
   }
 
-  else if (!highVoltTick) {
+  else {
     // similar to previous
     if (startTickSegment) {
-      // startTime = micros();
       startTime = now;
       setLowVoltageOutput();
       startTickSegment = false;
@@ -89,16 +68,8 @@ void loop() {
     if (now - startTime >= tickTimeUs / 2) {
       highVoltTick = true;
       startTickSegment = true;
-      currTickNum++;
-      if (currTickNum >= totalTicks)
-        currDataNum++;
     }
   }
-}
-
-// gets total number of ticks for each data point
-unsigned long getNumTicks(double rpm, double time) {
-  return (unsigned long)(rpm * time * numGearTeeth / 60.0);
 }
 
 // sets output to 5 volts
