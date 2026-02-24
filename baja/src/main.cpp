@@ -9,14 +9,16 @@ bool highVoltTick = true;
 bool startTickSegment = true;
 
 // potentiometer analog pin
-const int potPin = A0;
+const int potPin = 0; // A0
 // voltage output pin
 const int outputPin = 2;
 // need to know number of gear teeth in gear to convert rpm to number of ticks
-const int numGearTeeth = 16;
+const int numGearTeeth = 32;
+// 16
 
 const double minRPM = 0;
-const double maxRPM = 6000;
+const double maxRPM = 4000;
+// 6000
 
 // unsigned long getNumTicks(double rpm, double time);
 void setHighVoltageOutput();
@@ -32,13 +34,14 @@ void setup() {
 }
 
 void loop() {
-  // potentiometer returns value from 1-1023
-  int potVal = analogRead(potPin);
-  double rpm = minRPM + (double)potVal / 1023.0 * (maxRPM - minRPM);
+  // potentiometer returns value from 0-4095
 
-  if (rpm > 0) 
-    tickTimeUs = (unsigned long)(60000000.0 / (rpm * numGearTeeth));
-  else {
+  int potVal = analogRead(potPin);
+  double rpm = minRPM + (double)potVal / 4095 * (maxRPM - minRPM);
+  
+  if (rpm > 0) {
+    tickTimeUs = (unsigned long)(60000000.0 / (rpm * numGearTeeth * 2));
+  } else {
     setLowVoltageOutput();
     return;
   }
